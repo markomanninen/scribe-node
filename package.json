@@ -3,7 +3,7 @@
   "description": "Scribe java OAuth library port to node.js",
   "author": "Marko Manninen <mmstud@gmail.com> (http://about.me/markomanninen)",
   "version": "0.0.1",
-  "homepage" : "https://github.com/mmstud/scribe-node"
+  "homepage" : "https://github.com/mmstud/scribe-node",
   "keywords": [
     "scribe",
     "oauth",
