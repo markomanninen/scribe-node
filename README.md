@@ -2,7 +2,7 @@
 
 See: https://github.com/fernandezpablo85/scribe-java
 
-Due to different language (coffeescript / node.js) and heavy altering of the design on some parts I rather did not fork the original. But I really liked the way scribe was organized, especially giving option to add different web2.0 services as a widget easily on codebase.
+Due to different language used (coffeescript / node.js) and heavy altering the design on some parts I rather did not "github-fork" the original repository. Althought there are some oauth libraries for node.js reasoning behind this work was that I really liked the way scribe was organized, especially giving option to add easily different web2.0 services to the codebase as a widgets.
 
 ## How to use scribe the library
 
@@ -23,12 +23,12 @@ These small code snippets shows only general OAuth dance routines. On final appl
 
       service.getRequestToken request_token_extract
 
-# Save verification code to the datastore or session
+## Save verification code to the datastore or session
 
     set_verification_code = (code) ->
       # save to datastore for example
 
-# Get verifier you got from clicking and following the authorization url on earlier steps
+## Get verifier you got from clicking and following the authorization url on earlier steps
 
     get_verification_code = () ->
       code = 'verification_code'
@@ -51,7 +51,7 @@ These small code snippets shows only general OAuth dance routines. On final appl
 
       service.getAccessToken get_request_token(), get_verifier(), access_token_extract
 
-# Get from datastore or session after set_access_token.
+## Get from datastore or session after set_access_token.
 
 This will return the final token you would use to retrieve data via selected web service. All earlier steps are just preparing and completing authorization for the service.
 
@@ -60,4 +60,4 @@ This will return the final token you would use to retrieve data via selected web
       secret = 'access_secret'
       new scribe.Token token, secret
 
-# For example
+## Google analytics example
