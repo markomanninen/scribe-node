@@ -1,4 +1,10 @@
-# How to use scribe library
+# Scribe Java OAuth library port to node.js
+
+See: https://github.com/fernandezpablo85/scribe-java
+
+Due to different language (coffeescript / node.js) and heavy altering of the design on some parts I rather did not fork the original. But I really liked the way scribe was organized, especially giving option to add different web2.0 services as a widget easily on codebase.
+
+## How to use scribe the library
 
 These small code snippets shows only general OAuth dance routines. On final application storing tokens on steps differs a lot depending on how application is done.
 
