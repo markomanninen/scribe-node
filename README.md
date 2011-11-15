@@ -4,12 +4,7 @@ See: https://github.com/fernandezpablo85/scribe-java
 
 Due to different language used (coffeescript / node.js) and heavy altering the design on some parts I rather did not "github-fork" the original repository. Althought there are some oauth libraries for node.js reasoning behind this work was that I really liked the way scribe was organized, especially giving option to add easily different web2.0 services to the codebase as a widgets.
 
-## How to use scribe the library
-
 These small code snippets shows only general OAuth dance routines. On final application storing tokens on steps differs a lot depending on how application is done.
-
-    scribe = require 'scribe'
-    widgets = require('widgets').getWidgets(['GoogleApi', 'FacebookApi'])
 
 ## Get authorization url
 
@@ -61,3 +56,22 @@ This will return the final token you would use to retrieve data via selected web
       new scribe.Token token, secret
 
 ## Google analytics example
+
+    scribe = require('scribe')
+    widgets = require('widgets').getWidgets(['GoogleApi'])
+
+    service = new scribe.ServiceBuilder()
+              .provider(widgets.GoogleApi)
+              .apiKey('api_key')
+              .apiSecret('api_secret')
+              ._scope('https://www.google.com/analytics/feeds/')
+              .build()
+    access_token = get_access_token()
+    analytics_accounts_feed = 'https://www.google.com/analytics/feeds/accounts/default?max-results=5'
+    
+    handle_analytics_accounts_feed = (extractor, response) ->
+      entries = JSON.parse(extractor(response)).feed.entry
+      for entry in entries
+        console.log entry.id + " " + entry.title['$t'] + " " + entry["dxp:tableId"]
+    
+    service.signedRequest(access_token, handle_analytics_accounts_feed, analytics_accounts_feed)
