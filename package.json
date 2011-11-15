@@ -1,17 +1,10 @@
 {
-  "name": "scripbe-node",
+  "name": "scribe-node",
   "description": "Scribe java OAuth library port to node.js",
   "author": "Marko Manninen <mmstud@gmail.com> (http://about.me/markomanninen)",
-  "version": "0.0.1",
-  "homepage" : "https://github.com/mmstud/scribe-node",
-  "keywords": [
-    "scribe",
-    "oauth",
-    "web2.0",
-    "node.js",
-    "coffeescript",
-    "java"
-  ],
+  "version": "0.0.2",
+  "homepage": "https://github.com/mmstud/scribe-node",
+  "keywords": ["scribe","oauth","web2.0","node.js","coffeescript","java","google"],
   "licenses": [{
     "type": "MIT",
     "url": "https://raw.github.com/mmstud/scribe-node/master/LICENSE"
@@ -21,7 +14,8 @@
     "url": "https://github.com/mmstud/scribe-node.git"
   },
   "bugs" : {
-    "web" : "https://github.com/mmstud/scribe-node/issues"
+    "type": "issues",
+    "url": "https://github.com/mmstud/scribe-node/issues"
   },
   "main": "./lib/scribe.js",
   "dependencies": {
@@ -32,6 +26,6 @@
     "coffee-script": ">=1.1.3"
   },
   "engines": {
-    "node": "~0.4.12"
+    "node": "~0.4"
   }
 }

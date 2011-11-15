@@ -43,7 +43,7 @@ OAuthConstants =
   OUT_OF_BAND: "oob"
   VERIFIER: "oauth_verifier"
   HEADER: "Authorization"
-  EMPTY_TOKEN: new Token("", "")
+  EMPTY_TOKEN: new root.Token("", "")
   SCOPE: "scope"
   # OAuth 2.0
   ACCESS_TOKEN: "access_token"
@@ -132,16 +132,16 @@ class TokenExtractor20Impl
   extract: (response) ->
     if not response
       console.log "Response body is incorrect. Can't extract a token from an empty string"
-      return new Token("", "")
-    new Token(extract_token(response, /access_token=([^&]+)/g), "", response)
+      return new root.Token("", "")
+    new root.Token(extract_token(response, /access_token=([^&]+)/g), "", response)
 
 #
 class TokenExtractorImpl
   extract: (response) ->
     if not response
       console.log "Response body is incorrect. Can't extract a token from an empty string"
-      return new Token("", "")
-    new Token(extract_token(response, /oauth_token=([^&]+)/g), extract_token(response, /oauth_token_secret=([^&]+)/g), response)
+      return new root.Token("", "")
+    new root.Token(extract_token(response, /oauth_token=([^&]+)/g), extract_token(response, /oauth_token_secret=([^&]+)/g), response)
 
 #
 class BaseStringExtractorImpl
@@ -357,7 +357,7 @@ class OAuthConfig
     return false
 
 # Verifier class
-class Verifier
+class root.Verifier
   constructor: (@value) ->
     if not @value
       console.log "Must provide a valid string as verifier"
