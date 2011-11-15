@@ -46,7 +46,7 @@ These small code snippets shows only general OAuth dance routines. On final appl
 
       service.getAccessToken get_request_token(), get_verifier(), access_token_extract
 
-## Get from datastore or session after set_access_token.
+## Get from datastore or session after set_access_token
 
 This will return the final token you would use to retrieve data via selected web service. All earlier steps are just preparing and completing authorization for the service.
 
@@ -61,11 +61,11 @@ This will return the final token you would use to retrieve data via selected web
     widgets = require('widgets').getWidgets(['GoogleApi'])
 
     service = new scribe.ServiceBuilder()
-              .provider(widgets.GoogleApi)
-              .apiKey('api_key')
-              .apiSecret('api_secret')
-              ._scope('https://www.google.com/analytics/feeds/')
-              .build()
+                  .provider(widgets.GoogleApi)
+                  .apiKey('api_key')
+                  .apiSecret('api_secret')
+                  ._scope('https://www.google.com/analytics/feeds/')
+                  .build()
     access_token = get_access_token()
     analytics_accounts_feed = 'https://www.google.com/analytics/feeds/accounts/default?max-results=5'
     
