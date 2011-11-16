@@ -16,6 +16,8 @@ Source files are made with coffeescript as it provides seemingly cleaner and man
 
 Next steps are to retrieve authorization token and use it on your application to retrieve data from web service API. See Google analytics example at the end of the read me file.
 
+Note that I'm using offpage application mode for authorization. It means callback page is set to `oob` which causes service provider to show  verification code on browser window. Then you need to paste code to your application manually. Approach is a little bit different on fully pledged web appliations, that can hide this part of the process behind the screen.
+
 ## 1. Get authorization url
 
     get_authorization_url = (service) ->
@@ -30,10 +32,12 @@ Next steps are to retrieve authorization token and use it on your application to
 
 ## 2.1 Save verification code to the datastore or session
 
+This is the code you got from clicking and following the authorization url from the first step.
+
     set_verification_code = (code) ->
       # save code to datastore or session
 
-## 2.2 Get verification code you got from clicking and following the authorization url on the first step
+## 2.2 Get verification code
 
     get_verification_code = () ->
       code = 'verification_code' # get from datastore or session
@@ -89,4 +93,4 @@ I will use xml2json parser here to transform xml formatted response from Google 
     
     service.signedRequest(access_token, handle_analytics_accounts_feed, analytics_accounts_feed)
 
-If you do a lot of interaction with Google Analytics or google services, you want to create your own model for that, buts its beyond the scoe of this work.
+If you do a lot of interaction with Google Analytics or other Google services, you may want to create own model for more sophisticated approach, buts its beyond the scope of this work.
