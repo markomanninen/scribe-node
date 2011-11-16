@@ -18,49 +18,52 @@ Next steps are to retrieve authorization token and use it on your application to
 
 Note that I'm using offpage application mode for authorization. It means callback page is set to `oob` which causes service provider to show  verification code on browser window. Then you need to paste code to your application manually. Approach is a little bit different on fully pledged web appliations, that can hide this part of the process behind the screen.
 
-## 1. Get authorization url
+## Get authorization url
 
     get_authorization_url = (service) ->
-      request_token_extract = (extractor, response) ->
+      request_token_extract = (response) ->
         # request token should be saved somewhere because service.getAccessToken uses request token
-        request_token = extractor response
+        # but here we just print it on console, where you can take tokens and save inside get_request_token function
+        request_token = service.api.getRequestTokenExtractor() response
         console.log request_token
         url = service.getAuthorizationUrl request_token
-        console.log url
+        # as it is with request token, also url is printed to the console which you need to
+        # copy and paste to browser to retrieve the verification code
+        console.log "\nAuthorization url: "+url
 
       service.getRequestToken request_token_extract
 
-## 2.1 Save verification code to the datastore or session
+## Save verification code
 
 This is the code you got from clicking and following the authorization url from the first step.
 
     set_verification_code = (code) ->
-      # save code to datastore or session
+      # save code to data store or session store
 
-## 2.2 Get verification code
+## Get verification code
 
     get_verification_code = () ->
       code = 'verification_code' # get from datastore or session
       new scribe.Verifier code
 
-## 3. Get request token from datastore or session after get_authorization_url
+## Get request token at any point after get_authorization_url
 
     get_request_token = () ->
-      token = 'request_token' 
-      secret = 'request_secret'
+      token = 'request_token' # get from datastore or session
+      secret = 'request_secret' # get from datastore or session
       new scribe.Token token, secret
 
-## 4.1 Set and save access token to datastore or session
+## Retrieve and save access token
 
     set_access_token = (service) ->
-      access_token_extract = (extractor, response) ->
-        access_token = extractor response
+      access_token_extract = (response) ->
+        access_token = service.api.getAccessTokenExtractor() response
+        #save access token for later use
         console.log access_token
-        #save access token for later usage
 
-      service.getAccessToken get_request_token(), get_verifier(), access_token_extract
+      service.getAccessToken get_request_token(), get_verification_code(), access_token_extract
 
-## 4.2 Get access token from datastore or session after set_access_token
+## Get access token at any point after set_access_token
 
 This will return the final token you would use to retrieve data via selected web service. All earlier steps are just preparing and completing authorization for the service.
 
@@ -71,7 +74,36 @@ This will return the final token you would use to retrieve data via selected web
 
 ## Google analytics example
 
-I will use xml2json parser here to transform xml formatted response from Google service to json.
+So those are the helper functions to get final acces token. Lets see how to use them and after that how to get Google analytics account profiles using saved access token.
+
+### OAuth dance
+
+First of all, you need to register Google application api key and secret to be able to finnish next steps. So if you dont have it yet, you can request them from: https://accounts.google.com/ManageDomains
+
+After that you can start coffee eval loop:
+
+    $ coffee
+
+Then evaluate `get_authorization_url` function and do the following:
+
+    scribe = require('scribe').load(['GoogleApi'])
+    service = new scribe.ServiceBuilder().provider(scribe.GoogleApi).apiKey('api_key').apiSecret('api_secret')._scope('https://www.google.com/analytics/feeds/').build()
+    get_authorization_url service
+
+Copy and paste printed url from console to browser and save code to `get_verification_code` function. Similarly save printed request tokens to `get_request_token` function and evaluate both of them on console. Evaluate also `set_access_token` function before doing the next:
+
+    set_access_token service
+
+Now save access tokens to `get_access_token` function and evaluate it on console again. Now we are done the dance!
+
+### Get profiles
+
+I will use xml2json parser here to transform xml formatted response from Google service to json, iterate over entries and print profile data on console. You may need to install xml2json before this (ctrl-c to quit coffee):
+
+    $ npm install xml2json
+    $ coffee
+
+And then from coffee eval loop:
 
     scribe = require('scribe').load(['GoogleApi'])
     parser = require('xml2json').toJson

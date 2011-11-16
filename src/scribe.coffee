@@ -397,7 +397,7 @@ class OAuth10aServiceImpl
     req.addOAuthParameter OAuthConstants.CALLBACK, @config.getCallback()
     @addOAuthParams req, OAuthConstants.EMPTY_TOKEN
     @addSignature req
-    req.send cb, @api.getRequestTokenExtractor().extract
+    req.send cb
 
   addOAuthParams: (request, token) ->
     request.addOAuthParameter OAuthConstants.TIMESTAMP, @api.getTimestampService().getTimestampInSeconds()
@@ -416,14 +416,7 @@ class OAuth10aServiceImpl
     request.addOAuthParameter OAuthConstants.VERIFIER, verifier.getValue()
     @addOAuthParams request, request_token
     @addSignature request
-    request.send cb, @api.getAccessTokenExtractor().extract
-
-  addBodyParam: (key, value) ->
-    @request.addBodyParameter key, value
-
-  addBodyParams: (params) ->
-    for key, value in params
-      @addBodyParam key, value
+    request.send cb
 
   signedImagePostRequest: (token, cb, endpoint, params) ->
     request = new OAuthRequest Verb.POST, endpoint
@@ -451,6 +444,13 @@ class OAuth10aServiceImpl
     request.addOAuthParameter OAuthConstants.TOKEN, token.getToken()
     @addOAuthParams request, token
     @addSignature request
+
+  addBodyParam: (key, value) ->
+    @request.addBodyParameter key, value
+
+  addBodyParams: (params) ->
+    for key, value in params
+      @addBodyParam key, value
 
   getVersion: ->
     @VERSION
@@ -485,7 +485,7 @@ class DefaultApi
 # OAuth version 1a default API. To be included on widgets
 class root.DefaultApi10a extends DefaultApi
   getAccessTokenExtractor: ->
-    new TokenExtractorImpl
+    new TokenExtractorImpl().extract
 
   getBaseStringExtractor: ->
     new BaseStringExtractorImpl
@@ -494,7 +494,7 @@ class root.DefaultApi10a extends DefaultApi
     new HeaderExtractorImpl
 
   getRequestTokenExtractor: ->
-    new TokenExtractorImpl
+    new TokenExtractorImpl().extract
 
   getSignatureService: ->
     new HMACSha1SignatureService
@@ -547,7 +547,7 @@ class OAuth20ServiceImpl
 class root.DefaultApi20 extends DefaultApi
 
   getAccessTokenExtractor: ->
-    new TokenExtractor20Impl
+    new TokenExtractor20Impl().extract
 
   getAccessTokenVerb: ->
     @GET
