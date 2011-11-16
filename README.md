@@ -1,12 +1,22 @@
 # Scribe Java OAuth library port to node.js
 
-See: https://github.com/fernandezpablo85/scribe-java
+This library abstracts different OAuth schemes and modularizes web services so that both authorization routines and data retrieval after authorization is easy to do. Library design is borrowed from the corresponding java library:
 
-Due to different language used (coffeescript / node.js) and heavy altering the design on some parts I rather did not "github-fork" the original repository. Althought there are some oauth libraries for node.js reasoning behind this work was that I really liked the way scribe was organized, especially giving option to add easily different web2.0 services to the codebase as a widgets.
+https://github.com/fernandezpablo85/scribe-java
 
-These small code snippets shows only general OAuth dance routines. On final application storing tokens on steps differs a lot depending on how application is done.
+Due to different language used (coffeescript + node.js) and heavy alter of the design on some parts I rather did not "github fork" the original repository. Althought there are some OAuth libraries for node.js reasoning behind this work was that I really liked the way scribe was organized, especially giving option to add easily different web2.0 services to the codebase as a widgets.
 
-## Get authorization url
+Following small code snippets shows only general OAuth dance routines. On final application storing tokens on steps differs a lot depending on how application is done, normally it would be either some kind of persistent data store or session store.
+
+## Installation
+
+Source files are made with coffeescript as it provides seemingly cleaner and managable code. This adds one more step on development process thou. So if you want to add new widgets, fix bugs or add any new features, I recommend to install coffeescript first and use `cake build` on install directory to compile coffeescripts from `src` to `lib` directory. As an end user you would either get git repository or use `npm` to get scrible-node plus all depencities hassle free to your development environment:
+
+   npm install scribe-node
+
+Next steps are to retrieve authorization token and use it on your application to retrieve data from web service API. See Google analytics example at the end of the read me file.
+
+## 1. Get authorization url
 
     get_authorization_url = (service) ->
       request_token_extract = (extractor, response) ->
@@ -18,50 +28,52 @@ These small code snippets shows only general OAuth dance routines. On final appl
 
       service.getRequestToken request_token_extract
 
-## Save verification code to the datastore or session
+## 2.1 Save verification code to the datastore or session
 
     set_verification_code = (code) ->
-      # save to datastore for example
+      # save code to datastore or session
 
-## Get verifier you got from clicking and following the authorization url on earlier steps
+## 2.2 Get verification code you got from clicking and following the authorization url on the first step
 
     get_verification_code = () ->
-      code = 'verification_code'
+      code = 'verification_code' # get from datastore or session
       new scribe.Verifier code
 
-## Get request token from datastore or session after get_authorization_url
+## 3. Get request token from datastore or session after get_authorization_url
 
     get_request_token = () ->
       token = 'request_token' 
       secret = 'request_secret'
       new scribe.Token token, secret
 
-## Set and save access token to datastore or session
+## 4.1 Set and save access token to datastore or session
 
     set_access_token = (service) ->
       access_token_extract = (extractor, response) ->
         access_token = extractor response
         console.log access_token
-        #save access token for late usage
+        #save access token for later usage
 
       service.getAccessToken get_request_token(), get_verifier(), access_token_extract
 
-## Get from datastore or session after set_access_token
+## 4.2 Get access token from datastore or session after set_access_token
 
 This will return the final token you would use to retrieve data via selected web service. All earlier steps are just preparing and completing authorization for the service.
 
     get_access_token = () ->
-      token = 'access_token'
-      secret = 'access_secret'
+      token = 'access_token' # get from datastore or session
+      secret = 'access_secret' # get from datastore or session
       new scribe.Token token, secret
 
 ## Google analytics example
 
-    scribe = require('scribe')
-    widgets = require('widgets').getWidgets(['GoogleApi'])
+I will use xml2json parser here to transform xml formatted response from Google service to json.
 
+    scribe = require('scribe').load(['GoogleApi'])
+    parser = require('xml2json').toJson
+    
     service = new scribe.ServiceBuilder()
-                  .provider(widgets.GoogleApi)
+                  .provider(scribe.GoogleApi)
                   .apiKey('api_key')
                   .apiSecret('api_secret')
                   ._scope('https://www.google.com/analytics/feeds/')
@@ -69,9 +81,12 @@ This will return the final token you would use to retrieve data via selected web
     access_token = get_access_token()
     analytics_accounts_feed = 'https://www.google.com/analytics/feeds/accounts/default?max-results=5'
     
-    handle_analytics_accounts_feed = (extractor, response) ->
-      entries = JSON.parse(extractor(response)).feed.entry
+    handle_analytics_accounts_feed = (response) ->
+      console.log "Listing analytics account profiles:\n"
+      entries = JSON.parse(parser(response)).feed.entry
       for entry in entries
         console.log entry.id + " " + entry.title['$t'] + " " + entry["dxp:tableId"]
     
     service.signedRequest(access_token, handle_analytics_accounts_feed, analytics_accounts_feed)
+
+If you do a lot of interaction with Google Analytics or google services, you want to create your own model for that, buts its beyond the scoe of this work.

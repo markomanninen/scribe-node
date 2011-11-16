@@ -1,5 +1,15 @@
-# Scribe-node oauth kit
-# Based on scribe-java: https://github.com/fernandezpablo85/scribe-java
+# Scribe Java OAuth library port to node.js
+#
+# This library abstracts different OAuth schemes and modularizes web services so
+# that both authorization routines and data retrieval after authorization is easy to do.
+# Library design is borrowed from the corresponding java library:
+#
+# https://github.com/fernandezpablo85/scribe-java
+#
+# See README for usage and examples.
+#
+# Author: Marko Manninen <mmstud@gmail.com> (http://about.me/markomanninen)
+# Copyright (c) 2011
 
 root = exports ? this
 
@@ -7,8 +17,20 @@ http = require 'http'
 https = require 'https'
 url = require 'url'
 crypto = require 'crypto'
-parser = require 'xml2json'
-sprintf = require('sprintf').sprintf
+
+root.load = (apis) ->
+  for api in apis
+    eval('root.'+api+' = require("./widgets/'+api+'").'+api)
+  return this
+
+# Verifier class
+class root.Verifier
+  constructor: (@value) ->
+    if not @value
+      console.log "Must provide a valid string for verifier"
+
+  getValue: ->
+    @value
 
 # Token class
 class root.Token
@@ -132,7 +154,7 @@ class TokenExtractor20Impl
   extract: (response) ->
     if not response
       console.log "Response body is incorrect. Can't extract a token from an empty string"
-      return new root.Token("", "")
+      return OAuthConstants.EMPTY_TOKEN
     new root.Token(extract_token(response, /access_token=([^&]+)/g), "", response)
 
 #
@@ -140,7 +162,7 @@ class TokenExtractorImpl
   extract: (response) ->
     if not response
       console.log "Response body is incorrect. Can't extract a token from an empty string"
-      return new root.Token("", "")
+      return OAuthConstants.EMPTY_TOKEN
     new root.Token(extract_token(response, /oauth_token=([^&]+)/g), extract_token(response, /oauth_token_secret=([^&]+)/g), response)
 
 #
@@ -242,7 +264,7 @@ class Request
       vals = query[1].split("&")
       for val in vals 
           pair = val.split("=")
-          @addQueryStringParameter pair[0] pair[1]
+          @addQueryStringParameter pair[0], pair[1]
     # set up plain url without query string
     @url = query[0]
 
@@ -258,19 +280,33 @@ class Request
   getHeaders: ->
     @headers
 
-  extractRequest: (res, callback, extractor, encoding) ->
-    #console.log 'STATUS: ' + res.statusCode
-    #console.log 'HEADERS: ' + JSON.stringify res.headers
-    res.setEncoding(encoding) # utf8, binary
-    data = ''
-    res.on 'data', (chunk) ->
-      data += chunk
-    res.on 'end', () ->
-      callback extractor, data
-    res.on 'close', () ->
-      callback extractor, data
+  # TODO: why encoding variable didnt keep value inside response althought callback does?
+  # if that can be solved, then this if else clause can be dismissed
+  request: (protocol, options, callback) ->
+    if @encoding == 'binary'
+      protocol.request options, (res) ->
+        #console.log 'STATUS: ' + res.statusCode
+        #console.log 'HEADERS: ' + JSON.stringify res.headers
+        res.setEncoding('binary')
+        data = ''
+        res.on 'data', (chunk) ->
+          data += chunk
+        res.on 'end', () ->
+          callback data
+        res.on 'close', () ->
+          callback data
+    else
+      protocol.request options, (res) ->
+        res.setEncoding('utf8')
+        data = ''
+        res.on 'data', (chunk) ->
+          data += chunk
+        res.on 'end', () ->
+          callback data
+        res.on 'close', () ->
+          callback data
 
-  send: (callback, extractor = null) ->
+  send: (callback) ->
     params = params_to_query @queryStringParams, encode_data
     if params
       params = '?' + params
@@ -278,24 +314,14 @@ class Request
     parsed_options = url.parse(@url)
     options = {}
     options['host'] = parsed_options['hostname']
+    # TODO: handle ports other than 80, 443
+    #options['port'] = 80
     options['path'] = parsed_options['pathname'] + params
     options['method'] = @verb
-    # TODO handle different ports?
-    #options['port'] = 80
-
     options['headers'] = @headers
 
-    if parsed_options['protocol'] == 'https:'
-      protocol = https
-    else
-      protocol = http
-
-    if @encoding == 'binary'
-      req = protocol.request options, (res) ->
-        @extractRequest res, callback, extractor, 'binary'
-    else
-      req = protocol.request options, (res) ->
-        @extractRequest res, callback, extractor, 'utf8'
+    protocol = if parsed_options['protocol'] == 'https:' then https else http
+    req = @request protocol, options, callback
 
     req.on 'error', (e) ->
       console.log 'problem with send request: ' + e.message
@@ -356,14 +382,6 @@ class OAuthConfig
       return true
     return false
 
-# Verifier class
-class root.Verifier
-  constructor: (@value) ->
-    if not @value
-      console.log "Must provide a valid string as verifier"
-
-  getValue: ->
-    @value
 
 # OAuth 1.0a implementation
 class OAuth10aServiceImpl
@@ -420,12 +438,12 @@ class OAuth10aServiceImpl
     for key, value of params
       request.addBodyParameter key, value
     @signRequest token, request
-    request.send cb, parser.toJson
+    request.send cb
 
   signedRequest: (token, cb, endpoint) ->
     request = new OAuthRequest @api.getRequestVerb(), endpoint
     @signRequest token, request
-    request.send cb, parser.toJson
+    request.send cb
     
   signRequest: (token, request) ->
     for key, value of @api.getHeaders()
@@ -452,8 +470,20 @@ class OAuth10aServiceImpl
       for key, value of request.oauthParameters
         request.addQueryStringParameter key, value
 
-# OAuth version 1a default API
-class DefaultApi10a
+#
+class DefaultApi
+  GET: Verb.GET
+  POST: Verb.POST
+  PUT: Verb.PUT
+  DELETE: Verb.DELETE
+
+  getHeaders: () ->
+    headers = {}
+    headers['User-Agent'] = 'Scribe OAuth Client (node.js)'
+    return headers
+
+# OAuth version 1a default API. To be included on widgets
+class root.DefaultApi10a extends DefaultApi
   getAccessTokenExtractor: ->
     new TokenExtractorImpl
 
@@ -473,21 +503,17 @@ class DefaultApi10a
     new TimestampServiceImpl
 
   getAccessTokenVerb: ->
-    Verb.POST
+    @POST
 
   getRequestTokenVerb: ->
-    Verb.POST
+    @POST
 
   getRequestVerb: ->
-    Verb.POST
+    @POST
 
   createService: (config) ->
     new OAuth10aServiceImpl this, config
 
-  getHeaders: () ->
-    headers = {}
-    headers['User-Agent'] = 'Scribe-Node OAuth Client (node.js)'
-    return headers
 
 # OAuth 2.0 implementation
 class OAuth20ServiceImpl
@@ -517,19 +543,19 @@ class OAuth20ServiceImpl
   getAuthorizationUrl: (config) ->
     @api.getAuthorizationUrl config
 
-# OAuth version 2 default API
-class DefaultApi20
+# OAuth version 2 default API. To be included on widgets
+class root.DefaultApi20 extends DefaultApi
 
   getAccessTokenExtractor: ->
     new TokenExtractor20Impl
 
   getAccessTokenVerb: ->
-    Verb.GET
+    @GET
 
   createService: (config) ->
     new OAuth20ServiceImpl this, config
 
-# Service builder
+# Main API service builder
 class root.ServiceBuilder
   constructor: (@signatureType = null, @scope = null) ->
     @callback = OAuthConstants.OUT_OF_BAND
