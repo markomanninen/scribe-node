@@ -34,13 +34,26 @@ class root.Verifier
 
 # Token class
 class root.Token
-  constructor: (@token, @secret, @rawResponse = null) ->
+  # expires, type and refresh are OAuth 2.0 specific arguments
+  constructor: (@token, @secret, @rawResponse = null, @expires = null, @type = null, @refresh = null) ->
+
+  updateToken: (refresh_token) ->
+    @token = refresh_token.getToken()
 
   getToken: ->
     @token
 
   getSecret: ->
     @secret
+
+  getExpires: ->
+    @expires
+
+  getType: ->
+    @type
+
+  getRefresh: ->
+    @refresh
 
   getRawResponse: ->
     if @rawResponse == null
@@ -65,6 +78,7 @@ OAuthConstants =
   OUT_OF_BAND: "oob"
   VERIFIER: "oauth_verifier"
   HEADER: "Authorization"
+  # TODO: I'm not sure if there is really rationale for token object. Empty string could work as well...
   EMPTY_TOKEN: new root.Token("", "")
   SCOPE: "scope"
   # OAuth 2.0
@@ -72,7 +86,13 @@ OAuthConstants =
   CLIENT_ID: "client_id"
   CLIENT_SECRET: "client_secret"
   REDIRECT_URI: "redirect_uri"
+  GRANT_TYPE: "grant_type"
+  AUTHORIZATION_CODE: "authorization_code"
+  EXPIRES_IN: "expires_in"
+  TOKEN_TYPE: "token_type"
+  REFRESH_TOKEN: "refresh_token"
   CODE: "code"
+  BEARER: "Bearer "
 
 # Verbs
 Verb =
@@ -129,7 +149,7 @@ sort_by_keys = (obj) ->
 
 object_merge = ->
   out = {}
-  return out  unless arguments.length
+  return out unless arguments.length
   i = 0
   while i < arguments.length
     for key of arguments[i]
@@ -150,20 +170,28 @@ root.get_nonce = () ->
   return tsi.getNonce()
 
 #
-class TokenExtractor20Impl
-  extract: (response) ->
-    if not response
+class JsonTokenExtractorImpl
+  extract: (response_data) ->
+    if not response_data
       console.log "Response body is incorrect. Can't extract a token from an empty string"
       return OAuthConstants.EMPTY_TOKEN
-    new root.Token(extract_token(response, /access_token=([^&]+)/g), "", response)
+    new root.Token(extract_token(response_data, /"access_token"\s*:\s*"(\S*?)"/g), "", response_data, extract_token(response_data, /"expires_in"\s*:\s*([0-9]*)/g), extract_token(response_data, /"token_type"\s*:\s*"(\S*?)"/g), extract_token(response_data, /"refresh_token"\s*:\s*"(\S*?)"/g))
+
+#
+class TokenExtractor20Impl
+  extract: (response_data) ->
+    if not response_data
+      console.log "Response body is incorrect. Can't extract a token from an empty string"
+      return OAuthConstants.EMPTY_TOKEN
+    new root.Token(extract_token(response_data, /access_token=([^&]+)/g), "", response_data, extract_token(response_data, /expires_in=([^&]+)/g), extract_token(response_data, /token_type=([^&]+)/g), extract_token(response_data, /refresh_token=([^&]+)/g))
 
 #
 class TokenExtractorImpl
-  extract: (response) ->
-    if not response
+  extract: (response_data) ->
+    if not response_data
       console.log "Response body is incorrect. Can't extract a token from an empty string"
       return OAuthConstants.EMPTY_TOKEN
-    new root.Token(extract_token(response, /oauth_token=([^&]+)/g), extract_token(response, /oauth_token_secret=([^&]+)/g), response)
+    new root.Token(extract_token(response_data, /oauth_token=([^&]+)/g), extract_token(response_data, /oauth_token_secret=([^&]+)/g), response_data)
 
 #
 class BaseStringExtractorImpl
@@ -280,52 +308,40 @@ class Request
   getHeaders: ->
     @headers
 
-  # TODO: why encoding variable didnt keep value inside response althought callback does?
-  # if that can be solved, then this if else clause can be dismissed
   request: (protocol, options, callback) ->
-    if @encoding == 'binary'
-      protocol.request options, (res) ->
-        #console.log 'STATUS: ' + res.statusCode
-        #console.log 'HEADERS: ' + JSON.stringify res.headers
-        res.setEncoding('binary')
-        data = ''
-        res.on 'data', (chunk) ->
-          data += chunk
-        res.on 'end', () ->
-          callback data
-        res.on 'close', () ->
-          callback data
-    else
-      protocol.request options, (res) ->
-        res.setEncoding('utf8')
-        data = ''
-        res.on 'data', (chunk) ->
-          data += chunk
-        res.on 'end', () ->
-          callback data
-        res.on 'close', () ->
-          callback data
+    encoding = @encoding
+    protocol.request options, (res) ->
+      #console.log 'STATUS: ' + res.statusCode
+      #console.log 'HEADERS: ' + JSON.stringify res.headers
+      #console.log 'ENCODING: ' + encoding
+      #console.log 'ORIGINAL: ' + original_response
+      res.setEncoding(encoding)
+      res.data = ''
+      res.on 'data', (chunk) ->
+        #console.log 'DATA: ...'
+        this.data += chunk
+      res.on 'end', () ->
+        #console.log 'END: ' + data
+        callback this
+      res.on 'close', () ->
+        #console.log 'CLOSE: ' + data
+        callback this
 
   send: (callback) ->
-    params = params_to_query @queryStringParams, encode_data
-    if params
-      params = '?' + params
-
     parsed_options = url.parse(@url)
     options = {}
     options['host'] = parsed_options['hostname']
     # TODO: handle ports other than 80, 443
     #options['port'] = 80
-    options['path'] = parsed_options['pathname'] + params
+    params = params_to_query @queryStringParams, encode_data
+    options['path'] = parsed_options['pathname'] + (if params then '?'+params else '')
     options['method'] = @verb
     options['headers'] = @headers
-
+    #console.log 'OPTIONS: ' + JSON.stringify options
     protocol = if parsed_options['protocol'] == 'https:' then https else http
     req = @request protocol, options, callback
-
     req.on 'error', (e) ->
       console.log 'problem with send request: ' + e.message
-
     if @verb == Verb.PUT || @verb == Verb.POST
       req.write params_to_query @bodyParams, encode_data
     req.end()
@@ -482,6 +498,9 @@ class DefaultApi
     headers['User-Agent'] = 'Scribe OAuth Client (node.js)'
     return headers
 
+  getJsonTokenExtractor: ->
+    new JsonTokenExtractorImpl().extract
+
 # OAuth version 1a default API. To be included on widgets
 class root.DefaultApi10a extends DefaultApi
   getAccessTokenExtractor: ->
@@ -514,22 +533,49 @@ class root.DefaultApi10a extends DefaultApi
   createService: (config) ->
     new OAuth10aServiceImpl this, config
 
-
 # OAuth 2.0 implementation
 class OAuth20ServiceImpl
   constructor: (@api, @config) ->
     @VERSION = "2.0"
 
-  # request token not used?
-  getAccessToken: (request_token, verifier, cb) ->
-    request = new OAuthRequest @api.getAccessTokenVerb(), @api.getAccessTokenEndpoint()
-    request.addQueryStringParameter OAuthConstants.CLIENT_ID, @config.getApiKey()
-    request.addQueryStringParameter OAuthConstants.CLIENT_SECRET, @config.getApiSecret()
-    request.addQueryStringParameter OAuthConstants.CODE, verifier.getValue()
-    request.addQueryStringParameter OAuthConstants.REDIRECT_URI, @config.getCallback()
+  getToken: (cb, params, endpoint) ->
+    verb = @api.getAccessTokenVerb()
+    request = new OAuthRequest verb, endpoint
+    # TODO: is this universal behavior or just Google requires to add params on body on post?
+    if verb == Verb.POST || verb == Verb.PUT
+      for key, value of params
+        request.addBodyParameter key, value
+    else
+      for key, value of params
+        request.addQueryStringParameter key, value
+    #NOTE: at least Google requires special content type (application/x-www-form-urlencoded) on headers
+    for key, value of @api.getHeaders()
+      request.addHeader key, value
+
+    return request.send cb
+
+  getAccessToken: (verifier, cb) ->
+    params = {}
+    params[OAuthConstants.CLIENT_ID] = @config.getApiKey()
+    params[OAuthConstants.CLIENT_SECRET] = @config.getApiSecret()
+    params[OAuthConstants.CODE] = verifier.getValue()
+    params[OAuthConstants.REDIRECT_URI] = @config.getCallback()
+    params[OAuthConstants.GRANT_TYPE] = OAuthConstants.AUTHORIZATION_CODE
+    # TODO: im not sure if scope is really needed to get access token?
     if @config.hasScope()
-      request.addQueryStringParameter OAuthConstants.SCOPE, @config.getScope()
-    request.send cb @api.getAccessTokenExtractor().extract
+      params[OAuthConstants.SCOPE] = @config.getScope()
+
+    @getToken cb, params, @api.getAccessTokenEndpoint()
+
+  getRefreshToken: (access_token, cb) ->
+    params = {}
+    params[OAuthConstants.CLIENT_ID] = @config.getApiKey()
+    params[OAuthConstants.CLIENT_SECRET] = @config.getApiSecret()
+    params[OAuthConstants.REFRESH_TOKEN] = access_token.getRefresh()
+    params[OAuthConstants.GRANT_TYPE] = OAuthConstants.REFRESH_TOKEN
+    if @config.hasScope()
+      params[OAuthConstants.SCOPE] = @config.getScope()
+    @getToken cb, params, @api.getRefreshTokenEndpoint()
 
   getRequestToken: ->
     console.log "Unsupported operation, please use 'getAuthorizationUrl' and redirect your users there"
@@ -537,14 +583,25 @@ class OAuth20ServiceImpl
   getVersion: ->
     @VERSION
 
-  signRequest: (access_token, request) ->
-    request.addQueryStringParameter OAuthConstants.ACCESS_TOKEN, access_token.getToken()
+  signedRequest: (token, cb, endpoint) ->
+    request = new OAuthRequest @api.getRequestVerb(), endpoint
+    @signRequest token, request
+    request.send cb
 
-  getAuthorizationUrl: (config) ->
-    @api.getAuthorizationUrl config
+  signRequest: (access_token, request) ->
+    if access_token.getType().toLowerCase() == 'bearer'
+      request.addHeader OAuthConstants.HEADER, OAuthConstants.BEARER + access_token.getToken()
+    else
+      request.addQueryStringParameter OAuthConstants.ACCESS_TOKEN, access_token.getToken()
+
+  getAuthorizationUrl: ->
+    @api.getAuthorizationUrl @config
 
 # OAuth version 2 default API. To be included on widgets
 class root.DefaultApi20 extends DefaultApi
+
+  isFresh: (response_data) ->
+    if extract_token(extract_token(response_data, /"error"\s*:\s*\{(.*?)\}\}/g), /"message"\s*:\s*"(.*?)"/g).toLowerCase() == "invalid credentials" then false else true
 
   getAccessTokenExtractor: ->
     new TokenExtractor20Impl().extract
@@ -567,10 +624,10 @@ class root.ServiceBuilder
       @api = new apiClass
     this
 
-  # TODO: check valid url
+  # TODO: check valid url. but its not really valid url on Google OAuth 2.0 forexample
   _callback: (@callback) ->
-    if not @callback or @callback.toLowerCase() != OAuthConstants.OUT_OF_BAND.toLowerCase()
-      console.log "Callback must be a valid URL or 'oob'"
+    #if not @callback or @callback.toLowerCase() != OAuthConstants.OUT_OF_BAND.toLowerCase()
+    #  console.log "Callback must be a valid URL or 'oob'"
     this
 
   apiKey: (@apiKey) ->
