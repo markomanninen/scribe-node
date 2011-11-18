@@ -47,14 +47,14 @@ This is the code you got from clicking and following the authorization url from 
 ### Get verification code
 
     get_verification_code = () ->
-      code = 'verification_code' # get from datastore or session
+      code = 'write_verification_code_here' # get from datastore or session
       new scribe.Verifier code
 
 ### Get request token at any point after get_authorization_url
 
     get_request_token = () ->
-      token = 'request_token' # get from datastore or session
-      secret = 'request_secret' # get from datastore or session
+      token = 'write_request_token_here' # get from datastore or session
+      secret = 'write_request_secret_here' # get from datastore or session
       new scribe.Token token, secret
 
 ### Retrieve and save access token
@@ -72,15 +72,15 @@ This is the code you got from clicking and following the authorization url from 
 This will return the final token you would use to retrieve data via selected web service. All earlier steps are just preparing and completing authorization for the service.
 
     get_access_token = () ->
-      token = 'access_token' # get from datastore or session
-      secret = 'access_secret' # get from datastore or session
+      token = 'write_access_token_here' # get from datastore or session
+      secret = 'write_access_secret_here' # get from datastore or session
       new scribe.Token token, secret
 
-## Google Analytics Example
+## Google Analytics Example 1.0a
 
 ### Authorize
 
-So those are the helper functions to get final acces token. Lets see how to use them and after that how to get Google analytics account profiles using saved access token.
+So those are the helper functions to get final access token. Lets see how to use them and after that how to get Google nalytics account profiles using saved access token. As mentioned earlier, this is using OAuth 1.0a scheme. OAuth 2.0 is little bit different and will be explained later on using same Analytics example.
 
 First of all, you need to register Google application api key and secret to be able to finnish next steps. So if you dont have it yet, you can request them from: https://accounts.google.com/ManageDomains
 
