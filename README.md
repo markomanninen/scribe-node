@@ -4,7 +4,7 @@ This library abstracts different OAuth schemes and modularizes web services so t
 
 https://github.com/fernandezpablo85/scribe-java
 
-Due to different language used (coffeescript + node.js) and pretty heavy alter of the design on some parts I rather did not "github fork" the original repository. Althought there are some OAuth libraries for node.js ([https://github.com/ciaranj/node-oauth oauth] and [ x] namely) reasoning behind this work was that I really liked the way scribe was organized, especially giving option to add easily different web2.0 services to the codebase as a widgets. I also wanted to offer more specific support to different web service APIs via widgets, not only general interface.
+Due to different language used (coffeescript + node.js) and pretty heavy alter of the design on some parts I rather did not "github fork" the original repository. Althought there are some OAuth libraries for node.js ([oauth](https://github.com/ciaranj/node-oauth) and [node-oauth](https://github.com/EastCloud/node-oauth) namely) reasoning behind this work was that I really liked the way scribe was organized, especially giving option to add easily different web2.0 services to the codebase as a widgets. I also wanted to offer more specific support to different web service APIs via widgets, not only general interface.
 
 Following small code snippets shows only general OAuth 1.0a and 2.0 dance routines. On final application storing tokens on each step differs a lot depending on how application is done. Normally store would be either some kind of persistent data store or session store. But on these examples I just hard code tokens inside functions before calling them. Its a lof of manual work I know, but on final application most of it is hidden behind the flow.
 
@@ -139,7 +139,7 @@ These are the specialized APIs that are already implemented on scribe-node libra
 
 * GoogleApi
 * GoogleApi2
-* TwitterApi ([http://github.com/fernandezpablo85 fernandezpablo85])
+* TwitterApi ([fernandezpablo85](http://github.com/fernandezpablo85))
 
 ### Yet to be done list
 
@@ -169,4 +169,5 @@ These are the specialized APIs that are already implemented on scribe-node libra
 
 * extracting tokens might be over generalizing now when they are on classes having only extract method. simpler way would be to use just functions, but need to research, if there is any name collision possibility. but i think not because they would be inside module anyway
 * all the apis to widgets from original java lib. see supported list
-* 
+* separate OAuth 1.0a and 2.0 examples
+* hubot script for full demostration of Google Analytics graphical chart generation
