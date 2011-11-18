@@ -20,6 +20,7 @@ crypto = require 'crypto'
 
 root.load = (apis) ->
   for api in apis
+    # root[api] = require('./widgets/' + api)[api]
     eval('root.'+api+' = require("./widgets/'+api+'").'+api)
   return this
 
