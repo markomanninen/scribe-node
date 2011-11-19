@@ -3,6 +3,8 @@ root = exports ? this
 api = require('../scribe').DefaultApi10a
 
 # Google API 1.0
+# Docs: http://code.google.com/intl/en-EN/apis/accounts/docs/OAuthForInstalledApps.html
+# Register: https://www.google.com/accounts/ManageDomains
 class root.GoogleApi extends api
   constructor: ->
     @REQUEST_TOKEN_URL = "https://www.google.com/accounts/OAuthGetRequestToken"

@@ -3,6 +3,8 @@ root = exports ? this
 api = require('../scribe').DefaultApi10a
 
 # Twitter API
+# Docs: https://dev.twitter.com/docs/auth/oauth
+# Register: https://dev.twitter.com/apps
 class root.Twitter extends api
   constructor: ->
     @REQUEST_TOKEN_URL = "http://api.twitter.com/oauth/request_token"
