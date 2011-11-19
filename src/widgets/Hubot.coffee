@@ -38,16 +38,17 @@ class root.Hubot
     if not @robot.brain.data.oauth
       @robot.brain.data.oauth = []
       @robot.brain.data.oauth[@api] = []
-    else if not robot.brain.data.oauth[@api]
+    else if not @robot.brain.data.oauth[@api]
       @robot.brain.data.oauth[@api] = []
     return @robot.brain.data.oauth[@api]
 
   get_authorization_url: () ->
     if service = @create_service()
       brains = @init_robot_brains()
+      msg = @msg
       # OAuth v2.0 is this much simpler on retrieving url
       if service.getVersion() == "2.0"
-        @msg.send "Authorization url: " + service.getAuthorizationUrl()
+        msg.send "Authorization url: " + service.getAuthorizationUrl()
       else
         request_token_extract = (response) ->
           console.log 'Response: ' + response.data
@@ -95,7 +96,7 @@ class root.Hubot
     if service = @create_service()
       if service.getVersion() == "1.0" and not brains['request_token']
         @msg.send "Please get authorization url and request token first"
-      else if code = msg.match[2]
+      else if code = @msg.match[2]
         brains['code'] = code
         @msg.send 'Verification code set: ' + brains['code']
         @set_access_token service
