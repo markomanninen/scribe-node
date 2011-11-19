@@ -110,13 +110,14 @@ class root.Hubot
     if service = @create_service api
       if service.getVersion() == "2.0"
         access_token = @get_access_token robot, msg, api
+        brains = @init_robot_brains robot, api
         refresh_token_extract = (response) ->
           console.log 'Response: ' + response.data
           refresh_token = service.api.getAccessTokenExtractor() response.data
           access_token.updateToken refresh_token
-          brains = @init_robot_brains robot, api
           brains['access_token'] = access_token.getToken()
           # TODO: How expired_in should be used?
+          # time + expires_in -> look up value. if current is more than stored, then refresh?
           brains['expires_in'] = access_token.getExpires()
           console.log "Refreshed token: " + brains['access_token']
           msg.send "Token refreshed"
