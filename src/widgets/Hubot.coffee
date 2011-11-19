@@ -43,8 +43,8 @@ class root.Hubot
     return @robot.brain.data.oauth[@api]
 
   get_authorization_url: () ->
-    if service = @create_service
-      brains = @init_robot_brains
+    if service = @create_service()
+      brains = @init_robot_brains()
       # OAuth v2.0 is this much simpler on retrieving url
       if service.getVersion() == "2.0"
         @msg.send "Authorization url: " + service.getAuthorizationUrl()
@@ -67,7 +67,7 @@ class root.Hubot
   # is called after set verification code
   set_access_token: (service) ->
     # this (@) references cant be used inside callback functions, but variables (local) can be used
-    brains = @init_robot_brains
+    brains = @init_robot_brains()
     msg = @msg
     access_token_extract = (response) ->
       console.log 'Response: ' + response.data
@@ -91,8 +91,8 @@ class root.Hubot
       service.getAccessToken @get_request_token(), @get_verifier(), access_token_extract
 
   set_verification_code: () ->
-    brains = @init_robot_brains
-    if service = @create_service
+    brains = @init_robot_brains()
+    if service = @create_service()
       if service.getVersion() == "1.0" and not brains['request_token']
         @msg.send "Please get authorization url and request token first"
       else if code = msg.match[2]
@@ -103,8 +103,8 @@ class root.Hubot
         @msg.send "Verification code not found"
 
   get_access_token: () ->
-    brains = @init_robot_brains
-    if brains['access_token'] and service = @create_service
+    brains = @init_robot_brains()
+    if brains['access_token'] and service = @create_service()
       # OAuth v2.0 has some more fields on token
       if service.getVersion() == "2.0"
         return new scribe.Token brains['access_token'], "", "", brains['expires_in'], brains['token_type'], brains['refresh_token']
@@ -116,12 +116,12 @@ class root.Hubot
 
   # for OAuth v2.0 only
   refresh_token: () ->
-    if service = @create_service
+    if service = @create_service()
       msg = @msg
       if service.getVersion() == "2.0"
-        if not access_token = @get_access_token
+        if not access_token = @get_access_token()
           return false
-        brains = @init_robot_brains
+        brains = @init_robot_brains()
         refresh_token_extract = (response) ->
           console.log 'Response: ' + response.data
           refresh_token = service.api.getAccessTokenExtractor() response.data
