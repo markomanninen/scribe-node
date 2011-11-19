@@ -26,7 +26,7 @@ class root.Hubot
       robot.brain.data.oauth = []
       robot.brain.data.oauth[api] = []
     else if not robot.brain.data.oauth[api]
-        robot.brain.data.oauth[api] = []
+      robot.brain.data.oauth[api] = []
     return robot.brain.data.oauth[api]
 
   get_authorization_url: (robot, msg, api) ->
@@ -41,7 +41,7 @@ class root.Hubot
           console.log 'Response: ' + response.data
           token = service.api.getRequestTokenExtractor() response.data
           url = service.getAuthorizationUrl token
-          msg.send "Authorization url: "+url
+          msg.send "Authorization url: " + url
           brains['request_token'] = token.getToken()
           brains['request_secret'] = token.getSecret()
           console.log "Request token set: " + brains['request_token']
@@ -56,10 +56,11 @@ class root.Hubot
     new scribe.Verifier robot.brain.data.oauth[api]['code']
 
   set_access_token: (robot, msg, api, service) ->
+    # this (@) references cant be used inside callback functions, but variables (local) can be used
+    brains = @init_robot_brains robot, api
     access_token_extract = (response) ->
       console.log 'Response: ' + response.data
       token = service.api.getAccessTokenExtractor() response.data
-      brains = @init_robot_brains robot, api
       if brains['access_token'] = token.getToken()
         console.log 'Access token set: ' + brains['access_token']
         # access secret is not really needed on OAuth 2.0 scheme. expires, type and refresh tokens are instead
