@@ -89,15 +89,15 @@ class root.OAuth
       return false
     storage = @init_storage()
     if service.getVersion() == "2.0"
-     storage[@api]['expires_in'] = null
-     storage[@api]['token_type'] = null
-     storage[@api]['refresh_token'] = null
+      delete storage['expires_in']
+      delete storage['token_type']
+      delete storage['refresh_token']
     else
-      storage[@api]['request_token'] = null
-      storage[@api]['request_secret'] = null
-    storage[@api]['code'] = null
-    storage[@api]['access_token'] = null
-    storage[@api]['access_secret'] = null
+      delete storage['request_token']
+      delete storage['request_secret']
+    delete storage['code']
+    delete storage['access_token']
+    delete storage['access_secret']
     return true
 
   get_request_token: () ->
