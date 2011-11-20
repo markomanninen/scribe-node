@@ -57,7 +57,7 @@ class root.Token
     @refresh
 
   getRawResponse: ->
-    if @rawResponse == null
+    if not @rawResponse
       console.log "This token object was not constructed by scribe and does not have a rawResponse"
       return ""
     @rawResponse
@@ -342,7 +342,7 @@ class Request
     protocol = if parsed_options['protocol'] == 'https:' then https else http
     req = @request protocol, options, callback
     req.on 'error', (e) ->
-      console.log 'problem with send request: ' + e.message
+      console.log 'Problem with sent request: ' + e.message
     if @verb == Verb.PUT || @verb == Verb.POST
       req.write params_to_query @bodyParams, encode_data
     req.end()
@@ -620,42 +620,42 @@ class root.ServiceBuilder
 
   provider: (apiClass) ->
     if not apiClass
-      console.log "Api class cannot be null"
+      console.log "Error: API class not given!"
     else
       @api = new apiClass
     this
 
-  # TODO: check valid url. but its not really valid url on Google OAuth 2.0 forexample
   _callback: (@callback) ->
-    #if not @callback or @callback.toLowerCase() != OAuthConstants.OUT_OF_BAND.toLowerCase()
-    #  console.log "Callback must be a valid URL or 'oob'"
+    if not @callback
+      console.log "Notice: Callback not given"
     this
 
   apiKey: (@apiKey) ->
     if not @apiKey
-      console.log "Invalid Api key"
+      console.log "Error: API key not given!"
     this
 
   apiSecret: (@apiSecret) ->
     if not @apiSecret
-      console.log "Invalid Api secret"
+      console.log "Warning: API secret not given"
     this
 
   _scope: (@scope) ->
     if not @scope
-      console.log "Invalid OAuth scope"
+      console.log "Warning: OAuth scope not given"
     this
 
   signatureType: (@signatureType) ->
     if not @signatureType
-      console.log "Signature type can't be null"
+      # see OAuthConfig
+      console.log "Notice: Signature type not given. Header type will be used."
     this
 
   build: ->
     if not @api
-      console.log "You must specify a valid api through the provider() method"
+      console.log "Error: You must specify a valid API through the provider() method"
     if not @apiKey
-      console.log "You must provide an api key"
+      console.log "Error: You must provide an API key"
     if not @apiSecret
-      console.log "You must provide an api secret"
+      console.log "Warning: You didnt provide an API secret"
     @api.createService(new OAuthConfig @apiKey, @apiSecret, @callback, @signatureType, @scope)
