@@ -4,8 +4,8 @@
 # it can greatly simplify authorization routines on node.js/coffeescript apps, but one could also use it as
 # a starting point to own handling.
 #
-# - class / widget supports certain api on hood, but with optional services parameter any service can be used.
-#   on that case provider class must extend scribe DefaultAPi10a or DefaultAPi20 to work right way
+# - class / widget supports certain api on hood, but with optional services parameter any web service / API can be used.
+#   on that case provider class must extend scribe DefaultApi10a or DefaultApi20 to work right way
 # - default services can be configured with environment variables
 # - storage could be any form of storage, session, redis db and so forth that just has "on set" and "on get" event
 #   handlers. in case of hubot you can pass robot.brain.data to store oauth tokens
@@ -16,8 +16,12 @@
 #      callback function to return true/false
 #   4. get_request_token, get_access_token and get_verifier methods to retrieve tokens as per method name
 #
-# TODO: signatureType on default service configurations is not used yet, but its possible and maybe
-# required on some services because default will be Header type.
+# TODO:
+# - signatureType on default service configurations is not used yet, but its possible and maybe
+#   required on some services because default will be "Header" type
+# - its unclear how expired_in should be used
+# - at the moment callbacks return only true/false or authorization url. on some cases more information
+#   could be served so returned object could be associated array of values. but so far I try to keep it silly simple
 
 root = exports ? this
 # require main library and apis
@@ -78,7 +82,23 @@ class root.OAuth
           console.log "Request token set: " + storage['request_token']
           callback service.getAuthorizationUrl token
         service.getRequestToken request_token_extract
-    callback false
+    else callback false
+
+  remove_authorization: () ->
+    if not service = @create_service()
+      return false
+    storage = @init_storage()
+    if service.getVersion() == "2.0"
+     storage[@api]['expires_in'] = null
+     storage[@api]['token_type'] = null
+     storage[@api]['refresh_token'] = null
+    else
+      storage[@api]['request_token'] = null
+      storage[@api]['request_secret'] = null
+    storage[@api]['code'] = null
+    storage[@api]['access_token'] = null
+    storage[@api]['access_secret'] = null
+    return true
 
   get_request_token: () ->
     new scribe.Token @storage.oauth[@api]['request_token'], @storage.oauth[@api]['request_secret']
@@ -123,7 +143,7 @@ class root.OAuth
         @set_access_token service, callback
       else
         console.log "Verification code not found"
-    callback false
+    else callback false
 
   get_access_token: () ->
     storage = @init_storage()
@@ -155,4 +175,4 @@ class root.OAuth
         service.getRefreshToken access_token, refresh_token_extract
       else
         console.log "Only OAuth 2.0 tokens can be refreshed."
-    callback false
+    else callback false
