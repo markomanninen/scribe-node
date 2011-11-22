@@ -3,7 +3,7 @@ root = exports ? this
 api = require('../scribe').DefaultApi10a
 
 # Twitter API
-# Docs: https://dev.twitter.com/docs/auth/oauth
+# Docs: https://dev.twitter.com/docs/auth/oauth & https://dev.twitter.com/docs/auth/oauth/oauth-echo
 # Register: https://dev.twitter.com/apps
 class root.TwitterApi extends api
   constructor: ->

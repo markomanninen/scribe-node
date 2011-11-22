@@ -20,8 +20,8 @@ crypto = require 'crypto'
 
 root.load = (apis) ->
   for api in apis
-    # root[api] = require('./widgets/' + api)[api]
-    eval('root.'+api+' = require("./widgets/'+api+'").'+api)
+    root[api] = require('./widgets/' + api)[api]
+    #eval('root.'+api+' = require("./widgets/'+api+'").'+api)
   return this
 
 # Verifier class
@@ -315,7 +315,6 @@ class Request
       #console.log 'STATUS: ' + res.statusCode
       #console.log 'HEADERS: ' + JSON.stringify res.headers
       #console.log 'ENCODING: ' + encoding
-      #console.log 'ORIGINAL: ' + original_response
       res.setEncoding(encoding)
       res.data = ''
       res.on 'data', (chunk) ->
@@ -399,9 +398,40 @@ class OAuthConfig
       return true
     return false
 
+# shared methods for 1.0a and 2.0 implementation
+class OAuthServiceImpl
+  signedImagePostRequest: (token, cb, endpoint, params) ->
+    request = new OAuthRequest Verb.POST, endpoint
+    request.setEncoding('binary')
+    for key, value of params
+      request.addBodyParameter key, value
+    @signRequest token, request
+    request.send cb
+
+  signedPostRequest: (token, cb, endpoint, params) ->
+    request = new OAuthRequest Verb.POST, endpoint
+    for key, value of params
+      request.addBodyParameter key, value
+    @signRequest token, request
+    request.send cb
+
+  signedRequest: (token, cb, endpoint) ->
+    request = new OAuthRequest @api.getRequestVerb(), endpoint
+    @signRequest token, request
+    request.send cb
+
+  getVersion: ->
+    @VERSION
+
+  addBodyParam: (key, value) ->
+    @request.addBodyParameter key, value
+
+  addBodyParams: (params) ->
+    for key, value in params
+      @addBodyParam key, value
 
 # OAuth 1.0a implementation
-class OAuth10aServiceImpl
+class OAuth10aServiceImpl extends OAuthServiceImpl
   constructor: (@api, @config) ->
     @VERSION = "1.0"
     @request = new OAuthRequest @api.getRequestTokenVerb(), @api.getRequestTokenEndpoint()
@@ -434,26 +464,6 @@ class OAuth10aServiceImpl
     @addOAuthParams request, request_token
     @addSignature request
     request.send cb
-
-  signedImagePostRequest: (token, cb, endpoint, params) ->
-    request = new OAuthRequest Verb.POST, endpoint
-    request.setEncoding('binary')
-    for key, value of params
-      request.addBodyParameter key, value
-    @signRequest token, request
-    request.send cb
-
-  signedPostRequest: (token, cb, endpoint, params) ->
-    request = new OAuthRequest Verb.POST, endpoint
-    for key, value of params
-      request.addBodyParameter key, value
-    @signRequest token, request
-    request.send cb
-
-  signedRequest: (token, cb, endpoint) ->
-    request = new OAuthRequest @api.getRequestVerb(), endpoint
-    @signRequest token, request
-    request.send cb
     
   signRequest: (token, request) ->
     for key, value of @api.getHeaders()
@@ -461,16 +471,6 @@ class OAuth10aServiceImpl
     request.addOAuthParameter OAuthConstants.TOKEN, token.getToken()
     @addOAuthParams request, token
     @addSignature request
-
-  addBodyParam: (key, value) ->
-    @request.addBodyParameter key, value
-
-  addBodyParams: (params) ->
-    for key, value in params
-      @addBodyParam key, value
-
-  getVersion: ->
-    @VERSION
 
   getAuthorizationUrl: (request_token) ->
     @api.getAuthorizationUrl request_token
@@ -487,7 +487,7 @@ class OAuth10aServiceImpl
       for key, value of request.oauthParameters
         request.addQueryStringParameter key, value
 
-#
+# shared api methods for 1.0a and 2.0 implementation
 class DefaultApi
   GET: Verb.GET
   POST: Verb.POST
@@ -501,6 +501,15 @@ class DefaultApi
 
   getJsonTokenExtractor: ->
     new JsonTokenExtractorImpl().extract
+
+  getAccessTokenVerb: ->
+    @POST
+
+  getRequestTokenVerb: ->
+    @POST
+
+  getRequestVerb: ->
+    @POST
 
 # OAuth version 1a default API. To be included on widgets
 class root.DefaultApi10a extends DefaultApi
@@ -522,20 +531,11 @@ class root.DefaultApi10a extends DefaultApi
   getTimestampService: ->
     new TimestampServiceImpl
 
-  getAccessTokenVerb: ->
-    @POST
-
-  getRequestTokenVerb: ->
-    @POST
-
-  getRequestVerb: ->
-    @POST
-
   createService: (config) ->
     new OAuth10aServiceImpl this, config
 
 # OAuth 2.0 implementation
-class OAuth20ServiceImpl
+class OAuth20ServiceImpl extends OAuthServiceImpl
   constructor: (@api, @config) ->
     @VERSION = "2.0"
 
@@ -581,16 +581,9 @@ class OAuth20ServiceImpl
   getRequestToken: ->
     console.log "Unsupported operation, please use 'getAuthorizationUrl' and redirect your users there"
 
-  getVersion: ->
-    @VERSION
-
-  signedRequest: (token, cb, endpoint) ->
-    request = new OAuthRequest @api.getRequestVerb(), endpoint
-    @signRequest token, request
-    request.send cb
-
   signRequest: (access_token, request) ->
-    if access_token.getType().toLowerCase() == 'bearer'
+    type = access_token.getType()
+    if type and type.toLowerCase() == 'bearer'
       request.addHeader OAuthConstants.HEADER, OAuthConstants.BEARER + access_token.getToken()
     else
       request.addQueryStringParameter OAuthConstants.ACCESS_TOKEN, access_token.getToken()

@@ -25,14 +25,15 @@
 
 root = exports ? this
 # require main library and apis
-scribe = require('../scribe').load(['GoogleApi', 'GoogleApi2', 'TwitterApi'])
+scribe = require('../scribe').load(['GoogleApi', 'GoogleApi2', 'TwitterApi', 'FacebookApi'])
 # hubot enviroment variables
 env = process.env
 # set up services. this list should be updated when new widgets comes in and has been tested
 default_services = {}
-default_services['analytics'] = {'provider': scribe.GoogleApi, 'key': env.GOOGLE_OAUTH_API_KEY, 'secret':   env.GOOGLE_OAUTH_API_SECRET, 'scope': 'https://www.google.com/analytics/feeds/', 'callback': 'oob'}
-default_services['analytics2'] = {'provider': scribe.GoogleApi2, 'key': env.GOOGLE_OAUTH2_API_KEY, 'secret':   env.GOOGLE_OAUTH2_API_SECRET, 'scope': 'https://www.googleapis.com/auth/analytics.readonly', 'callback': 'urn:ietf:wg:oauth:2.0:oob'}
-default_services['twitter'] = {'provider': scribe.TwitterApi, 'key': env.TWITTER_OAUTH_API_KEY, 'secret':   env.TWITTER_OAUTH_API_SECRET, 'scope': '', 'callback': 'oob'}
+default_services['analytics'] = {'provider': scribe.GoogleApi, 'key': env.GOOGLE_OAUTH_API_KEY, 'secret': env.GOOGLE_OAUTH_API_SECRET, 'scope': 'https://www.google.com/analytics/feeds/', 'callback': 'oob'}
+default_services['analytics2'] = {'provider': scribe.GoogleApi2, 'key': env.GOOGLE_OAUTH2_API_KEY, 'secret': env.GOOGLE_OAUTH2_API_SECRET, 'scope': 'https://www.googleapis.com/auth/analytics.readonly', 'callback': 'urn:ietf:wg:oauth:2.0:oob'}
+default_services['twitter'] = {'provider': scribe.TwitterApi, 'key': env.TWITTER_OAUTH_API_KEY, 'secret': env.TWITTER_OAUTH_API_SECRET, 'scope': '', 'callback': 'oob'}
+default_services['facebook'] = {'provider': scribe.FacebookApi, 'key': env.FACEBOOK_OAUTH_API_KEY, 'secret': env.FACEBOOK_OAUTH_API_SECRET, 'scope': 'email,read_stream,read_insights', 'callback': 'https://www.facebook.com/connect/login_success.html'}
 
 class root.OAuth
   # TODO: its possible to provide own services here, but then those service providers should be implemented by own classes
@@ -59,7 +60,8 @@ class root.OAuth
       console.log "Service / API not found: " + @api
       return false
 
-  init_storage: () ->
+  # private method
+  _init_storage: () ->
     if not @storage.oauth
       @storage.oauth = []
       @storage.oauth[@api] = []
@@ -69,7 +71,7 @@ class root.OAuth
 
   get_authorization_url: (callback) ->
     if service = @create_service()
-      storage = @init_storage()
+      storage = @_init_storage()
       # OAuth v2.0 is this much simpler on retrieving url
       if service.getVersion() == "2.0"
         callback service.getAuthorizationUrl()
@@ -87,7 +89,7 @@ class root.OAuth
   remove_authorization: () ->
     if not service = @create_service()
       return false
-    storage = @init_storage()
+    storage = @_init_storage()
     if service.getVersion() == "2.0"
       delete storage['expires_in']
       delete storage['token_type']
@@ -106,10 +108,21 @@ class root.OAuth
   get_verifier: () ->
     new scribe.Verifier @storage.oauth[@api]['code']
 
-  # is called after set verification code
-  set_access_token: (service, callback) ->
+  # special case for facebook desktop apps for example in that case you have access token instead of verification code
+  # and you will set it directly to the scribe. note because its OAuth2.0 protocol, no need for access secret at all
+  # TODO: should prevent accidental usage?
+  set_access_token_code: (code) ->
+    if service = @create_service()
+      storage = @_init_storage()
+      storage['access_token'] = code
+      console.log 'Access token set: ' + storage['access_token']
+      return true
+    return false
+
+  # private method. is called after set verification code
+  _set_access_token: (service, callback) ->
     # this (@) references cant be used inside callback functions, but variables (local) can be used
-    storage = @init_storage()
+    storage = @_init_storage()
     access_token_extract = (response) ->
       #console.log 'Response: ' + response.data
       token = service.api.getAccessTokenExtractor() response.data
@@ -133,20 +146,20 @@ class root.OAuth
       service.getAccessToken @get_request_token(), @get_verifier(), access_token_extract
 
   set_verification_code: (code, callback) ->
-    storage = @init_storage()
+    storage = @_init_storage()
     if service = @create_service()
       if service.getVersion() == "1.0" and not storage['request_token']
         console.log "Please get authorization url and request token first"
       else if code
         storage['code'] = code
         console.log 'Verification code set: ' + storage['code']
-        @set_access_token service, callback
+        @_set_access_token service, callback
       else
         console.log "Verification code not found"
     else callback false
 
   get_access_token: () ->
-    storage = @init_storage()
+    storage = @_init_storage()
     if storage['access_token'] and service = @create_service()
       # OAuth v2.0 has some more fields on token
       if service.getVersion() == "2.0"
@@ -161,7 +174,7 @@ class root.OAuth
   refresh_access_token: (access_token, callback) ->
     if access_token and service = @create_service()
       if service.getVersion() == "2.0"
-        storage = @init_storage()
+        storage = @_init_storage()
         refresh_token_extract = (response) ->
           #console.log 'Response: ' + response.data
           refresh_token = service.api.getAccessTokenExtractor() response.data
