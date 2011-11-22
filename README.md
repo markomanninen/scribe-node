@@ -133,20 +133,23 @@ If you do a lot of interaction with Google Analytics or other Google services, y
 
 ## Widgets (APIs)
 
-New: OAuth widget is to fully demonstate OAuth process on application. One should carefully explore source from ` https://github.com/mmstud/scribe-node/blob/master/src/widgets/OAuth.coffee `
+__New:__
+
+OAuth widget is to fully demonstate OAuth process on application. One should carefully explore source from https://github.com/mmstud/scribe-node/blob/master/src/widgets/OAuth.coffee
 
 Using widget would be as simple as:
 
     scribe = require('scribe-node').load(['OAuth'])
-    service = new scribe.OAuth(YOUR_STORAGE_HANDLER, 'analytics')
+    service = new scribe.OAuth({}, 'analytics')
     service.get_authorization_url((url) -> console.log url)
-    service.set_verification_code('code', (response) -> console.log response)
+    service.set_verification_code('{code}', (response) -> console.log response)
     access_token = service.get_access_token()
 
 ### Supported and tested widget list
 
 These are the specialized APIs that are already implemented on scribe-node library. Althought limited list of APIs mentiond here, it doesnt mean to you cannot use library with any other web service available from internet. Library should work with all OAuth 1.0a and 2.0 schemes. If you have made your own API, please dont hesitate to fork this repository, add API as a widget to the library and send a pull request.
 
+* FacebookApi
 * GoogleApi
 * GoogleApi2
 * OAuth
@@ -171,7 +174,6 @@ These are the specialized APIs that are already implemented on scribe-node libra
 * KaixinApi
 * FoursquareApi
 * Foursquare2Api
-* FacebookApi
 * EvernoteApi
 * DropBoxApi
 * ConstantContactApi
