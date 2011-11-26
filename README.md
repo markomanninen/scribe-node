@@ -16,11 +16,27 @@ Source files are made with coffeescript as it provides seemingly cleaner and man
 
     npm install scribe-node
 
-Next steps are to demostrate retrieving authorization token and use it on your application to access data from web service. See Google analytics example at the end of the read me file. Examples uses OAuth 1.0a scheme. Later OAuth 2.0 examples will be added.
+## Widgets (APIs)
 
-Note that I'm using offpage application mode for authorization. It means callback page is set to `oob` which causes service provider to show  verification code on browser window. Then you need to paste code to your application manually. Approach is a little bit different on fully pledged web appliations, that can hide this part of the process behind the screen.
+OAuth widget is to fully demonstate OAuth process on application. One should carefully explore source from https://github.com/mmstud/scribe-node/blob/master/src/widgets/OAuth.coffee
+
+Using widget would be as simple as:
+
+    scribe = require('scribe-node').load(['OAuth'])
+    services = {}
+    services['analytics'] = {'provider': scribe.GoogleApi, 'key': '{YOUR_KEY}', 'secret': '{YOUR_SECRET}', 'scope': 'https://www.google.com/analytics/feeds/', 'callback': 'oob'}
+    service = new scribe.OAuth({}, 'analytics', services)
+    service.get_authorization_url((url) -> console.log url)
+
+    # after getting code execute rest of the script
+    service.set_verification_code('{CODE}', (response) -> console.log response)
+    access_token = service.get_access_token()
 
 ## OAuth 1.0a Dance Snippets
+
+Next steps are to demostrate retrieving authorization token in smaller pieces (if above method is not working for you for some reason) and use it on your application to access data from web service. See Google analytics example at the end of the read me file. Examples uses OAuth 1.0a scheme. Later OAuth 2.0 examples will be added.
+
+Note that I'm using offpage application mode for authorization. It means callback page is set to `oob` which causes service provider to show  verification code on browser window. Then you need to paste code to your application manually. Approach is a little bit different on fully pledged web appliations, that can hide this part of the process behind the screen.
 
 ### Get authorization url
 
@@ -130,20 +146,6 @@ And then from coffee eval loop:
     service.signedRequest(access_token, handle_analytics_accounts_feed, analytics_accounts_feed)
 
 If you do a lot of interaction with Google Analytics or other Google services, you may want to create own model for more sophisticated approach, buts its beyond the scope of this work.
-
-## Widgets (APIs)
-
-__New:__
-
-OAuth widget is to fully demonstate OAuth process on application. One should carefully explore source from https://github.com/mmstud/scribe-node/blob/master/src/widgets/OAuth.coffee
-
-Using widget would be as simple as:
-
-    scribe = require('scribe-node').load(['OAuth'])
-    service = new scribe.OAuth({}, 'analytics')
-    service.get_authorization_url((url) -> console.log url)
-    service.set_verification_code('{code}', (response) -> console.log response)
-    access_token = service.get_access_token()
 
 ### Supported and tested widget list
 

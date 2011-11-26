@@ -12,9 +12,10 @@
 # - public methods by OAuth class are:
 #   1. get_authorization_url which takes callback function to return url / false
 #   2. set_verification_code which takes code and callback function to return true/false
-#   3. refresh_access_token which is used by OAuth 2.0 schemes only and which takes access_token and 
+#   3. set_access_token_code which is used by OAuth 2.0 schemes only which takes code and return true/false
+#   4. refresh_access_token which is used by OAuth 2.0 schemes only and which takes access_token and 
 #      callback function to return true/false
-#   4. get_request_token, get_access_token and get_verifier methods to retrieve tokens as per method name
+#   5. get_request_token, get_access_token and get_verifier methods to retrieve tokens as per method name
 #
 # TODO:
 # - signatureType on default service configurations is not used yet, but its possible and maybe
