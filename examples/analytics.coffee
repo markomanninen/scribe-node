@@ -143,6 +143,7 @@ plot_profiles = (robot, msg, account, webproperty = null) ->\
 
 handle_authorization robot, msg
 
+# after getting authorization url and pin code, use it with next command:
 handle_verification robot, msg, ''
 
 get_profiles robot, msg

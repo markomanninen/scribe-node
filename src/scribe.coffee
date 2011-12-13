@@ -335,14 +335,19 @@ class Request
     params = params_to_query @queryStringParams, encode_data
     options['path'] = parsed_options['pathname'] + (if params then '?'+params else '')
     options['method'] = @verb
+    post_data = null
+    if @verb == Verb.PUT || @verb == Verb.POST
+      post_data = params_to_query @bodyParams, encode_data
+      #some services might need content length header, but question is, if req.write handles it already?
+      #@headers['Content-Length'] = Buffer.byteLength(post_data, @encoding)
     options['headers'] = @headers
     #console.log 'OPTIONS: ' + JSON.stringify options
     protocol = if parsed_options['protocol'] == 'https:' then https else http
     req = @request protocol, options, callback
     req.on 'error', (e) ->
       console.log 'Problem with sent request: ' + e.message
-    if @verb == Verb.PUT || @verb == Verb.POST
-      req.write params_to_query @bodyParams, encode_data
+    if post_data
+      req.write post_data
     req.end()
 
   addHeader: (key, value) ->
