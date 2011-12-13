@@ -26,7 +26,7 @@
 
 root = exports ? this
 # require main library and apis
-scribe = require('../scribe').load(['GoogleApi', 'GoogleApi2', 'TwitterApi', 'FacebookApi'])
+scribe = require('../scribe').load(['GoogleApi', 'GoogleApi2', 'TwitterApi', 'FacebookApi', 'LinkedInApi'])
 # hubot enviroment variables
 env = process.env
 # set up services. this list should be updated when new widgets comes in and has been tested
@@ -35,6 +35,7 @@ default_services['analytics'] = {'provider': scribe.GoogleApi, 'key': env.GOOGLE
 default_services['analytics2'] = {'provider': scribe.GoogleApi2, 'key': env.GOOGLE_OAUTH2_API_KEY, 'secret': env.GOOGLE_OAUTH2_API_SECRET, 'scope': 'https://www.googleapis.com/auth/analytics.readonly', 'callback': 'urn:ietf:wg:oauth:2.0:oob'}
 default_services['twitter'] = {'provider': scribe.TwitterApi, 'key': env.TWITTER_OAUTH_API_KEY, 'secret': env.TWITTER_OAUTH_API_SECRET, 'scope': '', 'callback': 'oob'}
 default_services['facebook'] = {'provider': scribe.FacebookApi, 'key': env.FACEBOOK_OAUTH_API_KEY, 'secret': env.FACEBOOK_OAUTH_API_SECRET, 'scope': 'email,read_stream,read_insights', 'callback': 'https://www.facebook.com/connect/login_success.html'}
+default_services['linkedin'] = {'provider': scribe.LinkedInApi, 'key': env.LINKEDIN_OAUTH_API_KEY, 'secret': env.LINKEDIN_OAUTH_API_SECRET, 'scope': '', 'callback': 'oob'}
 
 class root.OAuth
   # TODO: its possible to provide own services here, but then those service providers should be implemented by own classes

@@ -5,7 +5,7 @@ api = require('../scribe').DefaultApi10a
 # LinkedIn API
 # Docs: https://developer.linkedin.com/documents/authentication
 # Register: https://www.linkedin.com/secure/developer
-class root.LinkedIn extends api
+class root.LinkedInApi extends api
   constructor: ->
     @REQUEST_TOKEN_URL = "http://api.linkedin.com/uas/oauth/requestToken"
     @ACCESS_TOKEN_URL = "http://api.linkedin.com/uas/oauth/accessToken"
