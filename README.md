@@ -34,7 +34,7 @@ Using widget would be as simple as:
 
 ## OAuth 1.0a Dance Snippets
 
-Next steps are to demostrate retrieving authorization token in smaller pieces (if above method is not working for you for some reason) and use it on your application to access data from web service. See Google analytics example at the end of the read me file. Examples uses OAuth 1.0a scheme. Later OAuth 2.0 examples will be added.
+Next steps are to demostrate retrieving authorization token in smaller pieces (if above method is not working for you for some reason) and use it on your application to access data from web service. Example uses OAuth 1.0a scheme. Later OAuth 2.0 examples will be added.
 
 Note that I'm using offpage application mode for authorization. It means callback page is set to `oob` which causes service provider to show  verification code on browser window. Then you need to paste code to your application manually. Approach is a little bit different on fully pledged web appliations, that can hide this part of the process behind the screen.
 
@@ -154,6 +154,7 @@ These are the specialized APIs that are already implemented on scribe-node libra
 * FacebookApi
 * GoogleApi
 * GoogleApi2
+* LinkedInApi ([fernandezpablo85](http://github.com/fernandezpablo85))
 * OAuth
 * TwitterApi ([fernandezpablo85](http://github.com/fernandezpablo85))
 
@@ -172,7 +173,6 @@ These are the specialized APIs that are already implemented on scribe-node libra
 * NeteaseWeibooApi
 * LoveFilmApi
 * LiveApi
-* LinkedInApi
 * KaixinApi
 * FoursquareApi
 * Foursquare2Api
