@@ -14,7 +14,7 @@ _access_token = null
 
 services = {}
 
-services['analytics'] = {'provider': scribe.GoogleApi, 'key': 'www.articlemanager.us', 'secret': 'tD_FisW209w4ZRyE-ZoQwn8J', 'scope': 'https://www.google.com/analytics/feeds/', 'callback': 'oob'}
+services['analytics'] = {'provider': scribe.GoogleApi, 'key': '{api_key}', 'secret': '{api_secret}', 'scope': 'https://www.google.com/analytics/feeds/', 'callback': 'oob'}
 
 analytics_profiles_feed = 'https://www.google.com/analytics/feeds/accounts/default?alt=json'
 
