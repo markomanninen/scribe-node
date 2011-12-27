@@ -125,7 +125,7 @@ I will use xml2json parser here to transform xml formatted response from Google 
 
 And then from coffee eval loop:
 
-    scribe = require('scribe').load(['GoogleApi'])
+    scribe = require('scribe-node').load(['GoogleApi'])
     parser = require('xml2json').toJson
     
     service = new scribe.ServiceBuilder()
