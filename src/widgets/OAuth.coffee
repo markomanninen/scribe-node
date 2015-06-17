@@ -65,10 +65,10 @@ class root.OAuth
   # private method
   _init_storage: () ->
     if not @storage.oauth
-      @storage.oauth = []
-      @storage.oauth[@api] = []
+      @storage.oauth = {}
+      @storage.oauth[@api] = {}
     else if not @storage.oauth[@api]
-      @storage.oauth[@api] = []
+      @storage.oauth[@api] = {}
     return @storage.oauth[@api]
 
   get_authorization_url: (callback) ->
