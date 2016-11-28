@@ -157,6 +157,7 @@ These are the specialized APIs that are already implemented on scribe-node libra
 * LinkedInApi ([fernandezpablo85](http://github.com/fernandezpablo85))
 * OAuth
 * TwitterApi ([fernandezpablo85](http://github.com/fernandezpablo85))
+* XingApi ([rowi1de](https://github.com/rowi1de))
 
 ### Yet to be done list
 
@@ -179,6 +180,7 @@ These are the specialized APIs that are already implemented on scribe-node libra
 * EvernoteApi
 * DropBoxApi
 * ConstantContactApi
+* ?
 
 ## TODO
 
